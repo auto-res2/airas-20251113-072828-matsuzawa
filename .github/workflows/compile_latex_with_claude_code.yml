@@ -92,49 +92,18 @@ jobs:
           echo "Image copy completed. Files in images/:"
           ls -la "${LATEX_DIR}/images/" || echo "No images found"
 
-      # This is a temporary workaround until composite actions support timeout-minutes.
-      - name: Claude Code Run (Attempt 1)
-        id: claude_run_1
+      - name: Run Claude Code
+        timeout-minutes: 20
         continue-on-error: true
-        timeout-minutes: 10
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: ${{ env.PROMPT }}
-          claude_args: --max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite
+          claude_args: "--max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite"
 
-      - name: Claude Code Run (Attempt 2)
-        id: claude_run_2
-        if: steps.claude_run_1.outcome == 'failure'
+      - name: Verify and Move compiled PDF
+        id: verify_pdf
         continue-on-error: true
-        timeout-minutes: 10
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: ${{ env.PROMPT }}
-          claude_args: --max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite
-
-      - name: Claude Code Run (Attempt 3)
-        id: claude_run_3
-        if: steps.claude_run_2.outcome == 'failure'
-        continue-on-error: true
-        timeout-minutes: 10
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: ${{ env.PROMPT }}
-          claude_args: --max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite
-
-      - name: Check if all attempts failed
-        if: |
-          steps.claude_run_1.outcome == 'failure' &&
-          steps.claude_run_2.outcome == 'failure' &&
-          steps.claude_run_3.outcome == 'failure'
-        run: |
-          echo "❌ Claude Code failed after 3 attempts"
-          exit 1
-
-      - name: Move compiled PDF to .research/
         run: |
           src="${LATEX_DIR}/paper.pdf"
           dest=".research/paper.pdf"
@@ -146,7 +115,8 @@ jobs:
             exit 1
           fi
 
-      - name: Commit and push LaTeX outputs
+      - name: Commit and push LaTeX outputs (on success)
+        if: steps.verify_pdf.outcome == 'success'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -163,3 +133,13 @@ jobs:
           else
             echo "No changes were made by the agent."
           fi
+
+      - name: Trigger Workflow Re-run (on failure)
+        if: steps.verify_pdf.outcome == 'failure'
+        run: |
+          echo "Retrying workflow due to compilation failure."
+          gh workflow run "${{ github.workflow }}" --ref ${{ github.ref }} \
+            -f subdir='${{ github.event.inputs.subdir }}' \
+            -f iteration_id='${{ github.event.inputs.iteration_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
