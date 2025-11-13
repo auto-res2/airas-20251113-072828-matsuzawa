@@ -211,6 +211,18 @@ jobs:
           prompt: ${{ env.PROMPT }}
           claude_args: --max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite
 
+      - name: Cleanup before Attempt 2
+        if: steps.claude_run_1.outcome == 'failure'
+        run: |
+          pkill -9 claude || true
+          pkill -9 -f "claude-code" || true
+          rm -rf ~/.claude ~/.config/claude ~/.cache/claude /tmp/claude-*
+          npm cache clean --force || true
+          bun pm cache rm || true
+          uv cache clean || true
+          rm -rf ~/.cache/uv .venv
+          sleep 10
+
       - name: Claude Code Run (Attempt 2)
         id: claude_run_2
         if: steps.claude_run_1.outcome == 'failure'
