@@ -13,8 +13,8 @@ from omegaconf import DictConfig
 def main(cfg: DictConfig):
     Path(cfg.results_dir).mkdir(parents=True, exist_ok=True)
 
-    # Use run_id from config
-    run_id = cfg.run_id
+    # Use run_id from config, or fall back to run parameter if provided
+    run_id = cfg.get('run') if cfg.get('run') is not None else cfg.run_id
 
     cmd = [
         sys.executable,
