@@ -133,6 +133,7 @@ jobs:
           name: trial-results-${{ github.run.id }}-${{ env.RUN_ID }}
           path: ${{ env.RESULTS_DIR }}
 
+
   fix-and-rerun:
     name: Fix and Re-run Trial
     needs: [setup, run-trial-experiment]
@@ -197,11 +198,9 @@ jobs:
           
           cat "$RESULTS_DIR/error_summary.txt"
 
-      # This is a temporary workaround until composite actions support timeout-minutes.
-      - name: Claude Code Run (Attempt 1)
-        id: claude_run_1
+      - name: Run Claude Code
+        timeout-minutes: 2
         continue-on-error: true
-        timeout-minutes: 1
         uses: anthropics/claude-code-action@v1
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -209,56 +208,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: ${{ env.PROMPT }}
-          claude_args: --max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite
-
-      - name: Cleanup before Attempt 2
-        if: steps.claude_run_1.outcome == 'failure'
-        run: |
-          pkill -9 claude || true
-          pkill -9 -f "claude-code" || true
-          rm -rf ~/.claude ~/.config/claude ~/.cache/claude /tmp/claude-*
-          npm cache clean --force || true
-          bun pm cache rm || true
-          uv cache clean || true
-          rm -rf ~/.cache/uv .venv
-          sleep 10
-
-      - name: Claude Code Run (Attempt 2)
-        id: claude_run_2
-        if: steps.claude_run_1.outcome == 'failure'
-        continue-on-error: true
-        timeout-minutes: 10
-        uses: anthropics/claude-code-action@v1
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: ${{ env.PROMPT }}
-          claude_args: --max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite
-
-      - name: Claude Code Run (Attempt 3)
-        id: claude_run_3
-        if: steps.claude_run_2.outcome == 'failure'
-        continue-on-error: true
-        timeout-minutes: 10
-        uses: anthropics/claude-code-action@v1
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: ${{ env.PROMPT }}
-          claude_args: --max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite
-
-      - name: Check if all attempts failed
-        if: |
-          steps.claude_run_1.outcome == 'failure' &&
-          steps.claude_run_2.outcome == 'failure' &&
-          steps.claude_run_3.outcome == 'failure'
-        run: |
-          echo "❌ Claude Code failed after 3 attempts"
-          exit 1
+          claude_args: "--max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite"
 
       - name: Commit and push fix
         run: |
@@ -275,7 +225,7 @@ jobs:
               sleep $((2**i))
             done
           else
-            echo "OpenCode made no changes to the code."
+            echo "Claude Code made no changes to the code."
           fi
 
       - name: Trigger next iteration
@@ -288,6 +238,7 @@ jobs:
             -f model_name='${{ github.event.inputs.model_name }}'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
   trigger-next-run:
     name: Trigger Next Run in Sequence
