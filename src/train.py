@@ -430,8 +430,11 @@ def hydra_entry(cfg: DictConfig):
     if cfg.mode == "trial":
         cfg.wandb.mode = "disabled"
         cfg.optuna.n_trials = 0
+        # Temporarily disable struct mode to allow updates
+        OmegaConf.set_struct(cfg, False)
         OmegaConf.update(cfg, "training.max_steps", 2, merge=False)
         OmegaConf.update(cfg, "training.validation.every_n_tokens", cfg.dataset.max_length * 2, merge=False)
+        OmegaConf.set_struct(cfg, True)
     else:
         cfg.wandb.mode = "online"
 
