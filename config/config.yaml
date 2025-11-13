@@ -3,6 +3,7 @@ defaults:
   - _self_
 
 run: null
+run_id: ???
 
 wandb:
   entity: gengaru617-personal
