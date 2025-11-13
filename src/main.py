@@ -21,7 +21,6 @@ def main(cfg: DictConfig):
         "-u",
         "-m",
         "src.train",
-        f"run={run_id}",
         f"results_dir={cfg.results_dir}",
         f"mode={cfg.mode}",
     ]
