@@ -406,8 +406,8 @@ def _run_optuna(cfg: DictConfig):
         sub_cfg = copy.deepcopy(cfg)
         sub_cfg.wandb.mode = "disabled"
         sub_cfg.optuna.n_trials = 0
-        sub_cfg.training.max_steps = max(50, int(cfg.training.max_steps * 0.1))
-        sub_cfg.run.run_id = f"{cfg.run.run_id}-optuna-{trial.number}"
+        OmegaConf.update(sub_cfg, "run.training.max_steps", max(50, int(cfg.training.max_steps * 0.1)), merge=False)
+        OmegaConf.update(sub_cfg, "run.run_id", f"{cfg.run.run_id}-optuna-{trial.number}", merge=False)
         for k, v in params.items():
             _inject(sub_cfg, k, v)
         res = run_experiment(sub_cfg)
@@ -428,8 +428,10 @@ def _run_optuna(cfg: DictConfig):
 def hydra_entry(cfg: DictConfig):
     # ----------------- mode-specific overrides -----------------------------
     if cfg.mode == "trial":
-        cfg.wandb.mode = "disabled"; cfg.optuna.n_trials = 0; cfg.training.max_steps = 2
-        cfg.training.validation.every_n_tokens = cfg.dataset.max_length * 2
+        cfg.wandb.mode = "disabled"
+        cfg.optuna.n_trials = 0
+        OmegaConf.update(cfg, "run.training.max_steps", 2, merge=False)
+        OmegaConf.update(cfg, "run.training.validation.every_n_tokens", cfg.run.dataset.max_length * 2, merge=False)
     else:
         cfg.wandb.mode = "online"
 
