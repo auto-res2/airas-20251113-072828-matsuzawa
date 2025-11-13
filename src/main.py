@@ -27,7 +27,7 @@ def main(cfg: DictConfig):
     ]
 
     if cfg.mode == "trial":
-        cmd += ["wandb.mode=disabled", "optuna.n_trials=0", "training.max_steps=2"]
+        cmd += ["wandb.mode=disabled", "optuna.n_trials=0"]
     else:
         cmd += ["wandb.mode=online"]
 

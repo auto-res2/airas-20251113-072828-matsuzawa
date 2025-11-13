@@ -10,10 +10,16 @@ wandb:
 mode: full  # {trial, full}
 results_dir: outputs/
 
+# These will be populated from the run config
+method: ${run.method}
+model: ${run.model}
+dataset: ${run.dataset}
+training: ${run.training}
+
 optuna:
-  n_trials: 40
-  direction: maximize
-  search_space: {}
+  n_trials: ${run.optuna.n_trials}
+  direction: ${run.optuna.direction}
+  search_space: ${run.optuna.search_space}
 
 hydra:
   run:
