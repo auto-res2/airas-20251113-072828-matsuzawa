@@ -1,9 +1,8 @@
 defaults:
-  - runs: proposed-iter1-Qwen3-0.6B-gsm8k
   - _self_
+  - runs: proposed-iter1-Qwen3-0.6B-gsm8k
 
 run: null
-run_id: ???
 
 wandb:
   entity: gengaru617-personal
