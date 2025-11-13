@@ -797,7 +797,49 @@
     "iterations": [
       {
         "iteration_id": 1,
-        "method": "C3PO-LRS  – Carbon-/Cost-/Curvature Pareto Optimiser\n• Predictive token-to-accuracy model pₜ(k,η,b): a three-input Gaussian-Process updated online after every validation batch that maps future token budget k, current LR η, and effective batch-size b to expected GSM8K accuracy.  Initial prior is fit on 50 public GSM8K LoRA runs (released). • Model-Predictive-Control (MPC): every Δ=20 steps solve   max_{η,b,q,H}  E[pₜ(k_rem−F(η,b,q,H),η,b)]  s.t. Σ_H pow(η,b,q)·γ_H ≤ CO₂_rem,  Σ_H pow·price_H ≤ €_rem.  Variables: layer-wise LR scaling η, micro-batch b∈{8,16,32}, quantisation level q∈{8-bit,4-bit NF4}, and hour-slots H when training is active over planning horizon 12 h. • Fast solver: rewrite constraints with linearised power model; objective evaluated by GP surrogate; use Particle Swarm (10 ms on CPU) to pick non-dominated (η,b,q,H). • Curvature guard: predicted step accepted only if Mahsereci Hessian bound κ/(1+λκ) ≥ η; otherwise fall back to safe γ·η. • Continual learning of surrogate: posterior updated in <5 ms via rank-1 Cholesky update; uncertainty enters MPC via Upper-Confidence Bound.\n• Warm-start: first 200 steps use CANSA schedule then hand over to C3PO.  Additional +31 LoC on top of HuggingFace PEFT trainer."
+        "method": "C3PO-LRS  – Carbon-/Cost-/Curvature Pareto Optimiser\n• Predictive token-to-accuracy model pₜ(k,η,b): a three-input Gaussian-Process updated online after every validation batch that maps future token budget k, current LR η, and effective batch-size b to expected GSM8K accuracy.  Initial prior is fit on 50 public GSM8K LoRA runs (released). • Model-Predictive-Control (MPC): every Δ=20 steps solve   max_{η,b,q,H}  E[pₜ(k_rem−F(η,b,q,H),η,b)]  s.t. Σ_H pow(η,b,q)·γ_H ≤ CO₂_rem,  Σ_H pow·price_H ≤ €_rem.  Variables: layer-wise LR scaling η, micro-batch b∈{8,16,32}, quantisation level q∈{8-bit,4-bit NF4}, and hour-slots H when training is active over planning horizon 12 h. • Fast solver: rewrite constraints with linearised power model; objective evaluated by GP surrogate; use Particle Swarm (10 ms on CPU) to pick non-dominated (η,b,q,H). • Curvature guard: predicted step accepted only if Mahsereci Hessian bound κ/(1+λκ) ≥ η; otherwise fall back to safe γ·η. • Continual learning of surrogate: posterior updated in <5 ms via rank-1 Cholesky update; uncertainty enters MPC via Upper-Confidence Bound.\n• Warm-start: first 200 steps use CANSA schedule then hand over to C3PO.  Additional +31 LoC on top of HuggingFace PEFT trainer.",
+        "experimental_design": {
+          "experiment_summary": "We will reproduce the carbon-/cost-constrained LoRA fine-tuning study described in the hypothesis.  A single 0.6-B-parameter Qwen3 model is fine-tuned on GSM8K with PEFT/LoRA on one NVIDIA A100-80 GB GPU.  Every 20 optimisation steps the proposed C3PO-LRS controller calls a fast Model-Predictive-Control routine that jointly decides (1) the global learning-rate scaling, (2) the micro-batch size, (3) the weight-quantisation level (8-bit or 4-bit NF4) and (4) an on/off mask over the next 12 one-hour time-slots.  The objective maximises the Gaussian-Process surrogate’s upper-confidence-bound on the final validation accuracy while satisfying the remaining CO₂ and monetary budgets, using real 5-minute carbon-intensity and spot-price forecasts.  A curvature guard rejects overly aggressive LR proposals using the Mahsereci Hessian bound.  The surrogate is initialised from 50 public LoRA runs and updated online after every validation pass with rank-1 Cholesky updates (<5 ms).  Warm-start uses the CANSA reactive schedule for the first 200 steps.  Baseline BLuR-CANA (purely reactive) is run under identical hardware, datasets, budgets and validation cadence.  Primary evaluation is (A) GSM1k accuracy at exactly 120 g CO₂ and (B) domination count of the area-under-accuracy-vs-CO₂ Pareto curve over 36 seeds.  Secondary metrics include energy-to-target-accuracy, monetary cost and controller runtime.",
+          "evaluation_metrics": [
+            "GSM1k Accuracy at 120 g CO₂",
+            "Area-under-Accuracy-vs-CO₂ Pareto Curve Domination Count",
+            "Energy-to-55%-Accuracy (Joules)",
+            "Total Monetary Cost (€)",
+            "Controller Wall-Time per MPC Call (ms)",
+            "(A) GSM1k accuracy at 120 g CO₂;  (B) area-under-accuracy-vs-CO₂ Pareto curve domination count."
+          ],
+          "proposed_method": "C3PO-LRS (Carbon-/Cost-/Curvature Pareto Optimiser) couples a predictive token-to-accuracy model with MPC.  The surrogate p_t(k, η, b) is a three-input Gaussian Process (squared-exponential kernel, ARD) that predicts validation accuracy given remaining token budget k, current learning-rate η and effective batch size b.  An initial GP prior is trained on 50 public LoRA traces (released).  During fine-tuning, every Δ = 20 steps we solve\n   max_{η, b, q, H}  E[ p_t(k_rem − F(η,b,q,H), η, b) ]\nsubject to the linearised power, carbon and price constraints ∑_H power(η,b,q)·γ_H ≤ CO₂_rem and ∑_H power·price_H ≤ €_rem, where H is a binary mask over the next 12 hourly slots.  The unknown objective is evaluated via the GP’s mean plus one standard deviation (UCB).  A 20-particle Particle Swarm Optimiser with constraint-repair finds a non-dominated solution in ≈10 ms on CPU.  The selected control is applied if it passes the curvature guard η ≤ κ/(1+λκ); otherwise a damped LR γ·η is used.  After every validation (1 000 tokens) the GP posterior is updated in O(n) via rank-1 Cholesky update.  The first 200 optimisation steps follow CANSA, providing a safe warm-start.  Implementation is 31 LoC on top of the HuggingFace PEFT trainer; power, carbon and spot-price data are streamed via the Carbon-Aware-SDK.",
+          "comparative_methods": [
+            "BLuR-CANA (Reactive Carbon-Aware LR Scheduler)"
+          ],
+          "models_to_use": [
+            "Qwen3-0.6B"
+          ],
+          "datasets_to_use": [
+            "gsm8k"
+          ],
+          "hyperparameters_to_search": {
+            "initial_learning_rate_scaling": "0.05-0.4",
+            "micro_batch_size": "8,16,32",
+            "quantisation_level": "8bit,4bit-NF4",
+            "UCB_beta": "0.5-2.0",
+            "curvature_guard_gamma": "0.5-0.9"
+          }
+        },
+        "experiment_runs": [
+          {
+            "run_id": "proposed-iter1-Qwen3-0.6B-gsm8k",
+            "method_name": "proposed",
+            "model_name": "Qwen3-0.6B",
+            "dataset_name": "gsm8k"
+          },
+          {
+            "run_id": "comparative-1-iter1-Qwen3-0.6B-gsm8k",
+            "method_name": "comparative-1",
+            "model_name": "Qwen3-0.6B",
+            "dataset_name": "gsm8k"
+          }
+        ]
       }
     ]
   }
