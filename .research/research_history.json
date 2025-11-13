@@ -794,6 +794,11 @@
       "expected_result": "• Under 120 g CO₂ C3PO reaches 59.6 ± 0.3 % GSM1k (BLuR-CANA 58.7 %, CANSA 56.2 %).\n• Dominates baseline Pareto curves in 34⁄36 runs (hyper-volume +18 %).\n• Uses 31 % fewer Joules than BLuR-CANA to hit 55 % GSM8K by opportunistic 4-bit bursts.\n• Surrogate error ≤1.2 pp after 2 k steps; MPC solve time 14 ms median.\n• Ablation: no predictive model (reactive only) −1.4 pp; no batch/quant switch +12 % CO₂.",
       "expected_conclusion": "By marrying a learned accuracy-progress surrogate with MPC, C3PO-LRS *proactively* schedules LR, batch-size and quantisation to maximise accuracy under hard carbon/cost budgets.  The method yields a new state-of-the-art 59.6 % GSM1k within 120 g CO₂ and produces globally Pareto-optimal accuracy-vs-emissions curves, pushing carbon-aware optimisation from reactive heuristics to principled planning with provable dominance.  Its tiny code-footprint and released meta-dataset make predictive, budget-constrained fine-tuning viable for everyday researchers."
     },
-    "iterations": []
+    "iterations": [
+      {
+        "iteration_id": 1,
+        "method": "C3PO-LRS  – Carbon-/Cost-/Curvature Pareto Optimiser\n• Predictive token-to-accuracy model pₜ(k,η,b): a three-input Gaussian-Process updated online after every validation batch that maps future token budget k, current LR η, and effective batch-size b to expected GSM8K accuracy.  Initial prior is fit on 50 public GSM8K LoRA runs (released). • Model-Predictive-Control (MPC): every Δ=20 steps solve   max_{η,b,q,H}  E[pₜ(k_rem−F(η,b,q,H),η,b)]  s.t. Σ_H pow(η,b,q)·γ_H ≤ CO₂_rem,  Σ_H pow·price_H ≤ €_rem.  Variables: layer-wise LR scaling η, micro-batch b∈{8,16,32}, quantisation level q∈{8-bit,4-bit NF4}, and hour-slots H when training is active over planning horizon 12 h. • Fast solver: rewrite constraints with linearised power model; objective evaluated by GP surrogate; use Particle Swarm (10 ms on CPU) to pick non-dominated (η,b,q,H). • Curvature guard: predicted step accepted only if Mahsereci Hessian bound κ/(1+λκ) ≥ η; otherwise fall back to safe γ·η. • Continual learning of surrogate: posterior updated in <5 ms via rank-1 Cholesky update; uncertainty enters MPC via Upper-Confidence Bound.\n• Warm-start: first 200 steps use CANSA schedule then hand over to C3PO.  Additional +31 LoC on top of HuggingFace PEFT trainer."
+      }
+    ]
   }
 }
