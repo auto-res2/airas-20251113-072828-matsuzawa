@@ -1,4 +1,5 @@
-run_id: proposed-iter1-Qwen3-0.6B-gsm8k
+run:
+  run_id: proposed-iter1-Qwen3-0.6B-gsm8k
 method: C3PO-LRS
 model:
   name: Qwen/Qwen3-0.6B

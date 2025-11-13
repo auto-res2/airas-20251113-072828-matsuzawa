@@ -1,5 +1,5 @@
 defaults:
-  - runs@run: proposed-iter1-Qwen3-0.6B-gsm8k
+  - runs: proposed-iter1-Qwen3-0.6B-gsm8k
   - _self_
 
 wandb:

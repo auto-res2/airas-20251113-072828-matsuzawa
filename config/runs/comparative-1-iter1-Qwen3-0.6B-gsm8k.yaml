@@ -1,4 +1,5 @@
-run_id: comparative-1-iter1-Qwen3-0.6B-gsm8k
+run:
+  run_id: comparative-1-iter1-Qwen3-0.6B-gsm8k
 method: BLuR-CANA
 model:
   name: Qwen/Qwen3-0.6B
