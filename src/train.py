@@ -386,7 +386,8 @@ def run_experiment(cfg: DictConfig):
 ################################################################################
 
 def _run_optuna(cfg: DictConfig):
-    if cfg.optuna.n_trials == 0:
+    # Check if optuna config exists in the config struct
+    if "optuna" not in cfg or cfg.optuna.n_trials == 0:
         return
 
     space = cfg.optuna.search_space
@@ -428,7 +429,10 @@ def _run_optuna(cfg: DictConfig):
 def hydra_entry(cfg: DictConfig):
     # ----------------- mode-specific overrides -----------------------------
     if cfg.mode == "trial":
-        cfg.wandb.mode = "disabled"; cfg.optuna.n_trials = 0; cfg.training.max_steps = 2
+        cfg.wandb.mode = "disabled"
+        if "optuna" in cfg:
+            cfg.optuna.n_trials = 0
+        cfg.training.max_steps = 2
         cfg.training.validation.every_n_tokens = cfg.dataset.max_length * 2
     else:
         cfg.wandb.mode = "online"
