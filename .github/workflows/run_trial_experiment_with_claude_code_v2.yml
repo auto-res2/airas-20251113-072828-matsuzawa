@@ -201,7 +201,7 @@ jobs:
       - name: Claude Code Run (Attempt 1)
         id: claude_run_1
         continue-on-error: true
-        timeout-minutes: 10
+        timeout-minutes: 1
         uses: anthropics/claude-code-action@v1
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
