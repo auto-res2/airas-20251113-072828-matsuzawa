@@ -9,6 +9,7 @@ wandb:
 
 mode: full  # {trial, full}
 results_dir: outputs/
+run: ${run_id}
 
 hydra:
   run:
