@@ -424,7 +424,7 @@ def _run_optuna(cfg: DictConfig):
 #                                     CLI                                      #
 ################################################################################
 
-@hydra.main(config_path="../config", config_name="config")
+@hydra.main(version_base=None, config_path="../config", config_name="config")
 def hydra_entry(cfg: DictConfig):
     # ----------------- mode-specific overrides -----------------------------
     if cfg.mode == "trial":

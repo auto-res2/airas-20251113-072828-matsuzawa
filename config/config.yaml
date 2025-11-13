@@ -10,6 +10,11 @@ wandb:
 mode: full  # {trial, full}
 results_dir: outputs/
 
+optuna:
+  n_trials: 40
+  direction: maximize
+  search_space: {}
+
 hydra:
   run:
     dir: ${results_dir}/${now:%Y-%m-%d_%H-%M-%S}
