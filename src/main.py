@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 #                         Experiment orchestrator                              #
 ################################################################################
 
-@hydra.main(config_path="../config", config_name="config")
+@hydra.main(version_base=None, config_path="../config", config_name="config")
 def main(cfg: DictConfig):
     Path(cfg.results_dir).mkdir(parents=True, exist_ok=True)
 

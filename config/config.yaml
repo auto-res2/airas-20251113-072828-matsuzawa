@@ -1,5 +1,6 @@
 defaults:
   - runs@run: proposed-iter1-Qwen3-0.6B-gsm8k
+  - _self_
 
 wandb:
   entity: gengaru617-personal
@@ -16,4 +17,3 @@ hydra:
   job:
     env_set:
       WANDB_CACHE_DIR: .cache/
-    raise_on_error: true
