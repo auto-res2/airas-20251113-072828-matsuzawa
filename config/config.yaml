@@ -1,5 +1,5 @@
 defaults:
-  - runs/proposed-iter1-Qwen3-0.6B-gsm8k
+  - runs: proposed-iter1-Qwen3-0.6B-gsm8k
 
 wandb:
   entity: gengaru617-personal
@@ -8,7 +8,6 @@ wandb:
 
 mode: full  # {trial, full}
 results_dir: outputs/
-run: ${run_id}
 
 hydra:
   run:

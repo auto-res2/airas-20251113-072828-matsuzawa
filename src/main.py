@@ -13,15 +13,15 @@ from omegaconf import DictConfig
 def main(cfg: DictConfig):
     Path(cfg.results_dir).mkdir(parents=True, exist_ok=True)
 
-    # Handle case where cfg.run might be a string or an object with run_id
-    run_id = cfg.run if isinstance(cfg.run, str) else cfg.run.run_id
+    # Use run_id from config
+    run_id = cfg.run_id
 
     cmd = [
         sys.executable,
         "-u",
         "-m",
         "src.train",
-        f"run={run_id}",
+        f"runs={run_id}",
         f"results_dir={cfg.results_dir}",
         f"mode={cfg.mode}",
     ]

@@ -267,8 +267,8 @@ def run_experiment(cfg: DictConfig):
     # ------------------------ WandB initialisation --------------------------
     wb_run = None
     if cfg.wandb.mode != "disabled":
-        # Handle cfg.run being either a string or a DictConfig
-        run_id = cfg.run if isinstance(cfg.run, str) else cfg.run.run_id
+        # Use run_id from config
+        run_id = cfg.run_id
         wb_run = wandb.init(
             entity=cfg.wandb.entity,
             project=cfg.wandb.project,
@@ -410,12 +410,9 @@ def _run_optuna(cfg: DictConfig):
         sub_cfg.wandb.mode = "disabled"
         sub_cfg.optuna.n_trials = 0
         sub_cfg.training.max_steps = max(50, int(cfg.training.max_steps * 0.1))
-        # Handle cfg.run being either a string or a DictConfig
-        base_run_id = cfg.run if isinstance(cfg.run, str) else cfg.run.run_id
-        if isinstance(sub_cfg.run, str):
-            sub_cfg.run = f"{base_run_id}-optuna-{trial.number}"
-        else:
-            sub_cfg.run.run_id = f"{base_run_id}-optuna-{trial.number}"
+        # Use run_id from config
+        base_run_id = cfg.run_id
+        sub_cfg.run_id = f"{base_run_id}-optuna-{trial.number}"
         for k, v in params.items():
             _inject(sub_cfg, k, v)
         res = run_experiment(sub_cfg)
