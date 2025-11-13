@@ -1,0 +1,63 @@
+run_id: proposed-iter1-Qwen3-0.6B-gsm8k
+method: C3PO-LRS
+model:
+  name: Qwen/Qwen3-0.6B
+  peft:
+    technique: lora
+    r: 16
+    alpha: 32
+    dropout: 0.05
+  quantisation:
+    default_bits: 8
+    available_bits: [8, 4]
+dataset:
+  name: gsm8k
+  config: main
+  split_ratio:
+    train: 0.9
+    val: 0.1
+  max_length: 512
+  preprocessing:
+    remove_calculation_annotations: false
+training:
+  optimiser: AdamW
+  base_learning_rate: 2.0e-4
+  initial_learning_rate_scaling: 0.1  # will be updated by controller
+  weight_decay: 0.0
+  gradient_clip_norm: 1.0
+  max_steps: 6000
+  controller:
+    type: C3PO-LRS
+    warm_start_steps: 200
+    solve_every_n_steps: 20
+    planning_horizon_hours: 12
+    micro_batch_choices: [8, 16, 32]
+    quantisation_choices: [8, 4]
+    curvature_guard_gamma: 0.7
+    ucb_beta: 1.0
+    carbon_budget_g: 120
+    money_budget_eur: 0.12
+    carbon_trace: UK_2023
+    spot_price_trace: UK_2023
+  validation:
+    every_n_tokens: 1000
+    metrics: [gsm1k_accuracy]
+  carbon_monitor:
+    sample_interval_s: 5
+    power_meter: nvidia_smi
+optuna:
+  n_trials: 40
+  direction: maximize
+  search_space:
+    initial_learning_rate_scaling:
+      type: loguniform
+      low: 0.05
+      high: 0.4
+    ucb_beta:
+      type: uniform
+      low: 0.5
+      high: 2.0
+    curvature_guard_gamma:
+      type: uniform
+      low: 0.5
+      high: 0.9

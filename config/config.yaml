@@ -1,0 +1,19 @@
+defaults:
+  - runs@run: proposed-iter1-Qwen3-0.6B-gsm8k
+
+wandb:
+  entity: gengaru617-personal
+  project: 2025-11-13
+  mode: online
+
+mode: full  # {trial, full}
+results_dir: outputs/
+
+hydra:
+  run:
+    dir: ${results_dir}/${now:%Y-%m-%d_%H-%M-%S}
+  output_subdir: config
+  job:
+    env_set:
+      WANDB_CACHE_DIR: .cache/
+    raise_on_error: true
